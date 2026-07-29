@@ -104,7 +104,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard de Reviews · Holded (Trustpilot)</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #F5F6FA;
@@ -256,6 +256,44 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     padding: 40px;
     color: var(--muted);
   }
+  .review-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .review-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--panel);
+  }
+  .review-card .stars {
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: #D1D5DB;
+    margin-bottom: 6px;
+  }
+  .review-card .stars .filled { color: #F59E0B; }
+  .review-card .author {
+    font-weight: 600;
+    font-size: 13.5px;
+    margin-bottom: 2px;
+  }
+  .review-card .author-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .review-card .card-title {
+    font-weight: 600;
+    font-size: 13.5px;
+    margin-bottom: 4px;
+  }
+  .review-card .card-text {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
   footer {
     text-align: center;
     color: var(--muted);
@@ -301,6 +339,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 
   <div class="panel">
+    <h2>Últimas reviews</h2>
+    <div class="review-cards-grid" id="reviewCards"></div>
+  </div>
+
+  <div class="panel">
     <h2>Reviews</h2>
     <div class="filters" id="filters"></div>
     <div id="tableWrap">
@@ -329,47 +372,88 @@ const COLORS = __COLORS_JSON__;
 const VERTICAL_ORDER = __ORDER_JSON__;
 
 // --- Charts ---
-const verticalsWithData = VERTICAL_ORDER.filter(v => STATS.by_vertical[v].count > 0);
+// Envuelto en try/catch: si Chart.js no carga (CDN caido, bloqueado, etc.)
+// el resto del dashboard (tarjetas, filtros, tabla) debe seguir funcionando.
+try {
+  const verticalsWithData = VERTICAL_ORDER.filter(v => STATS.by_vertical[v].count > 0);
 
-new Chart(document.getElementById('chartVolumen'), {
-  type: 'bar',
-  data: {
-    labels: verticalsWithData,
-    datasets: [{
-      data: verticalsWithData.map(v => STATS.by_vertical[v].count),
-      backgroundColor: verticalsWithData.map(v => COLORS[v]),
-      borderRadius: 6,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, ticks: { precision: 0 } }
+  new Chart(document.getElementById('chartVolumen'), {
+    type: 'bar',
+    data: {
+      labels: verticalsWithData,
+      datasets: [{
+        data: verticalsWithData.map(v => STATS.by_vertical[v].count),
+        backgroundColor: verticalsWithData.map(v => COLORS[v]),
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } }
+      }
     }
-  }
-});
+  });
 
-new Chart(document.getElementById('chartRating'), {
-  type: 'bar',
-  data: {
-    labels: verticalsWithData,
-    datasets: [{
-      data: verticalsWithData.map(v => STATS.by_vertical[v].avg_rating ?? 0),
-      backgroundColor: verticalsWithData.map(v => COLORS[v]),
-      borderRadius: 6,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, max: 5 }
+  new Chart(document.getElementById('chartRating'), {
+    type: 'bar',
+    data: {
+      labels: verticalsWithData,
+      datasets: [{
+        data: verticalsWithData.map(v => STATS.by_vertical[v].avg_rating ?? 0),
+        backgroundColor: verticalsWithData.map(v => COLORS[v]),
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, max: 5 }
+      }
     }
+  });
+} catch (err) {
+  console.error('No se pudieron renderizar los graficos:', err);
+}
+
+// --- Ultimas reviews (tarjetas con puntuacion y autor) ---
+const CARDS_LIMIT = 12;
+
+function renderStars(rating) {
+  const r = rating || 0;
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += `<span class="${i <= r ? 'filled' : ''}">★</span>`;
   }
-});
+  return html;
+}
+
+function renderCards() {
+  const wrap = document.getElementById('reviewCards');
+  const items = REVIEWS.slice(0, CARDS_LIMIT);
+
+  if (items.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">Sin reviews todavia.</div>';
+    return;
+  }
+
+  wrap.innerHTML = items.map(r => {
+    const reviewShort = r.review.length > 160 ? r.review.slice(0, 160) + '…' : r.review;
+    return `
+      <div class="review-card">
+        <div class="stars">${renderStars(r.rating)}</div>
+        <div class="author">${escapeHtml(r.reviewer || 'Anonimo')}</div>
+        <div class="author-meta">${escapeHtml(r.pais || '')}${r.pais ? ' · ' : ''}${escapeHtml(r.fecha)}</div>
+        <div class="card-title">${escapeHtml(r.titulo)}</div>
+        <div class="card-text">${escapeHtml(reviewShort)}</div>
+      </div>
+    `;
+  }).join('');
+}
 
 // --- Filtros + tabla ---
 let activeFilter = 'Todos';
@@ -427,6 +511,7 @@ function renderTable() {
   }).join('');
 }
 
+renderCards();
 renderFilters();
 renderTable();
 </script>
