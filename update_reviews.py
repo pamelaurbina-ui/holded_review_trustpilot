@@ -45,6 +45,12 @@ VERTICAL_KEYWORDS = [
         "factura", "invoic", "billing", "presupuesto", "quote", "cobro",
         "recurring invoice", "facturacion recurrente",
     ]),
+    ("Precio", [
+        "precio", "precios", "caro", "carísimo", "carisimo", "price", "pricing",
+        "expensive", "overpriced", "cost", "costly", "value for money",
+        "relacion calidad-precio", "relación calidad-precio", "subida de precio",
+        "price increase", "aumento de precio",
+    ]),
     ("Conciliación", [
         "concilia", "reconcil", "extracto bancario", "bank statement",
         "sincroniza con el banco", "bank sync", "sync my bank", "sync bank",
@@ -80,7 +86,7 @@ VERTICAL_KEYWORDS = [
 # Palabras cortas/ambiguas: deben coincidir como palabra EXACTA (limite al
 # principio Y al final), para no dar falsos positivos (ej. "ocr" dentro de
 # "mediocre", "pos" dentro de "suppose", "hr" dentro de otra palabra).
-EXACT_WORD_KEYWORDS = {"sii", "pos", "hr", "ocr", "crm", "lead", "bom"}
+EXACT_WORD_KEYWORDS = {"sii", "pos", "hr", "ocr", "crm", "lead", "bom", "precio", "precios"}
 
 
 def classify_vertical(text: str) -> str:
