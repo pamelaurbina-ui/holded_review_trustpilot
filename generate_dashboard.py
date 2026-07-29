@@ -398,6 +398,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="panel">
     <h2>Reviews</h2>
     <div class="filters" id="filters"></div>
+    <div class="filters" id="ratingFilters"></div>
     <div id="tableWrap">
       <table>
         <thead>
@@ -531,6 +532,7 @@ function renderCards() {
 
 // --- Filtros + tabla ---
 let activeFilter = 'Todos';
+let activeRating = 'Todos';
 
 function renderFilters() {
   const filtersEl = document.getElementById('filters');
@@ -548,6 +550,26 @@ function renderFilters() {
   });
 }
 
+function renderRatingFilters() {
+  const filtersEl = document.getElementById('ratingFilters');
+  const ratings = [5, 4, 3, 2, 1];
+  const countFor = (n) => REVIEWS.filter(r => r.rating === n).length;
+  const options = [
+    { v: 'Todos', label: 'Todos los ratings', count: REVIEWS.length },
+    ...ratings.map(n => ({ v: String(n), label: '★'.repeat(n), count: countFor(n) })),
+  ];
+  filtersEl.innerHTML = options.map(o => {
+    return `<button class="filter-btn ${o.v === activeRating ? 'active' : ''}" data-r="${o.v}">${o.label} (${o.count})</button>`;
+  }).join('');
+  filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeRating = btn.dataset.r;
+      renderRatingFilters();
+      renderTable();
+    });
+  });
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
@@ -559,7 +581,10 @@ const ROW_TEXTS = [];
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   const emptyState = document.getElementById('emptyState');
-  const rows = activeFilter === 'Todos' ? REVIEWS : REVIEWS.filter(r => r.vertical === activeFilter);
+  let rows = activeFilter === 'Todos' ? REVIEWS : REVIEWS.filter(r => r.vertical === activeFilter);
+  if (activeRating !== 'Todos') {
+    rows = rows.filter(r => r.rating === Number(activeRating));
+  }
 
   if (rows.length === 0) {
     tbody.innerHTML = '';
@@ -616,6 +641,7 @@ document.getElementById('tableWrap').addEventListener('click', handleReadMoreCli
 
 renderCards();
 renderFilters();
+renderRatingFilters();
 renderTable();
 </script>
 </body>
