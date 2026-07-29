@@ -51,6 +51,13 @@ VERTICAL_KEYWORDS = [
         "relacion calidad-precio", "relación calidad-precio", "subida de precio",
         "price increase", "aumento de precio",
     ]),
+    ("Soporte", [
+        "soporte", "support team", "customer support", "customer service",
+        "atencion al cliente", "atención al cliente", "servicio al cliente",
+        "asistencia tecnica", "asistencia técnica", "help desk", "helpdesk",
+        "no responden", "tardan en responder", "sin respuesta", "unresponsive",
+        "chat de soporte", "equipo de soporte",
+    ]),
     ("Conciliación", [
         "concilia", "reconcil", "extracto bancario", "bank statement",
         "sincroniza con el banco", "bank sync", "sync my bank", "sync bank",

@@ -22,13 +22,14 @@ OUTPUT_HTML = OUTPUT_DIR / "index.html"
 SHEET_NAME = "Reviews"
 
 VERTICAL_ORDER = [
-    "Facturación", "Precio", "Conciliación", "General", "Escáner", "Recursos Humanos",
+    "Facturación", "Precio", "Soporte", "Conciliación", "General", "Escáner", "Recursos Humanos",
     "CRM", "Inventario", "Fabricación", "Catálogo", "SII AEAT", "TPV",
 ]
 
 VERTICAL_COLORS = {
     "Facturación": "#4F46E5",
     "Precio": "#84CC16",
+    "Soporte": "#3B82F6",
     "Conciliación": "#0EA5E9",
     "General": "#94A3B8",
     "Escáner": "#8B5CF6",
