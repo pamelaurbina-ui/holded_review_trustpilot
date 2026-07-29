@@ -256,10 +256,38 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     padding: 40px;
     color: var(--muted);
   }
-  .review-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  .review-columns {
+    display: flex;
     gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .review-column {
+    flex: 0 0 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .review-column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 2px;
+  }
+  .review-column-header .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .review-column-header .count {
+    color: var(--muted);
+    font-weight: 500;
+    margin-left: auto;
   }
   .review-card {
     border: 1px solid var(--border);
@@ -339,8 +367,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 
   <div class="panel">
-    <h2>Últimas reviews</h2>
-    <div class="review-cards-grid" id="reviewCards"></div>
+    <h2>Últimas reviews por vertical</h2>
+    <div class="review-columns" id="reviewCards"></div>
   </div>
 
   <div class="panel">
@@ -371,12 +399,12 @@ const STATS = __STATS_JSON__;
 const COLORS = __COLORS_JSON__;
 const VERTICAL_ORDER = __ORDER_JSON__;
 
+const verticalsWithData = VERTICAL_ORDER.filter(v => STATS.by_vertical[v].count > 0);
+
 // --- Charts ---
 // Envuelto en try/catch: si Chart.js no carga (CDN caido, bloqueado, etc.)
 // el resto del dashboard (tarjetas, filtros, tabla) debe seguir funcionando.
 try {
-  const verticalsWithData = VERTICAL_ORDER.filter(v => STATS.by_vertical[v].count > 0);
-
   new Chart(document.getElementById('chartVolumen'), {
     type: 'bar',
     data: {
@@ -420,8 +448,8 @@ try {
   console.error('No se pudieron renderizar los graficos:', err);
 }
 
-// --- Ultimas reviews (tarjetas con puntuacion y autor) ---
-const CARDS_LIMIT = 12;
+// --- Ultimas reviews por vertical (columnas con puntuacion y autor) ---
+const CARDS_PER_COLUMN = 6;
 
 function renderStars(rating) {
   const r = rating || 0;
@@ -432,24 +460,38 @@ function renderStars(rating) {
   return html;
 }
 
+function renderReviewCard(r) {
+  const reviewShort = r.review.length > 160 ? r.review.slice(0, 160) + '…' : r.review;
+  return `
+    <div class="review-card">
+      <div class="stars">${renderStars(r.rating)}</div>
+      <div class="author">${escapeHtml(r.reviewer || 'Anonimo')}</div>
+      <div class="author-meta">${escapeHtml(r.pais || '')}${r.pais ? ' · ' : ''}${escapeHtml(r.fecha)}</div>
+      <div class="card-title">${escapeHtml(r.titulo)}</div>
+      <div class="card-text">${escapeHtml(reviewShort)}</div>
+    </div>
+  `;
+}
+
 function renderCards() {
   const wrap = document.getElementById('reviewCards');
-  const items = REVIEWS.slice(0, CARDS_LIMIT);
 
-  if (items.length === 0) {
+  if (REVIEWS.length === 0) {
     wrap.innerHTML = '<div class="empty-state">Sin reviews todavia.</div>';
     return;
   }
 
-  wrap.innerHTML = items.map(r => {
-    const reviewShort = r.review.length > 160 ? r.review.slice(0, 160) + '…' : r.review;
+  wrap.innerHTML = verticalsWithData.map(vertical => {
+    const items = REVIEWS.filter(r => r.vertical === vertical).slice(0, CARDS_PER_COLUMN);
+    const color = COLORS[vertical] || '#94A3B8';
     return `
-      <div class="review-card">
-        <div class="stars">${renderStars(r.rating)}</div>
-        <div class="author">${escapeHtml(r.reviewer || 'Anonimo')}</div>
-        <div class="author-meta">${escapeHtml(r.pais || '')}${r.pais ? ' · ' : ''}${escapeHtml(r.fecha)}</div>
-        <div class="card-title">${escapeHtml(r.titulo)}</div>
-        <div class="card-text">${escapeHtml(reviewShort)}</div>
+      <div class="review-column">
+        <div class="review-column-header">
+          <span class="dot" style="background:${color}"></span>
+          <span>${escapeHtml(vertical)}</span>
+          <span class="count">${STATS.by_vertical[vertical].count}</span>
+        </div>
+        ${items.map(renderReviewCard).join('')}
       </div>
     `;
   }).join('');
