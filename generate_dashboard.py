@@ -22,23 +22,33 @@ OUTPUT_HTML = OUTPUT_DIR / "index.html"
 SHEET_NAME = "Reviews"
 
 VERTICAL_ORDER = [
-    "Facturación", "Precio", "Soporte", "Conciliación", "General", "Escáner", "Recursos Humanos",
-    "CRM", "Inventario", "Fabricación", "Catálogo", "SII AEAT", "TPV",
+    "Facturación", "Contabilidad", "Precio", "Soporte", "Conciliación", "Banco",
+    "General", "Escáner", "Recursos Humanos", "Nóminas", "CRM", "Proyectos",
+    "Reservas", "Inventario", "Fabricación", "Catálogo", "Importación",
+    "Analítica", "SII AEAT", "Impuestos", "TPV",
 ]
 
 VERTICAL_COLORS = {
     "Facturación": "#4F46E5",
+    "Contabilidad": "#9333EA",
     "Precio": "#84CC16",
     "Soporte": "#3B82F6",
     "Conciliación": "#0EA5E9",
+    "Banco": "#06B6D4",
     "General": "#94A3B8",
     "Escáner": "#8B5CF6",
     "Recursos Humanos": "#EC4899",
+    "Nóminas": "#E11D48",
     "CRM": "#F59E0B",
+    "Proyectos": "#65A30D",
+    "Reservas": "#C026D3",
     "Inventario": "#10B981",
     "Fabricación": "#F97316",
     "Catálogo": "#14B8A6",
+    "Importación": "#0D9488",
+    "Analítica": "#7C2D12",
     "SII AEAT": "#6366F1",
+    "Impuestos": "#EAB308",
     "TPV": "#EF4444",
 }
 

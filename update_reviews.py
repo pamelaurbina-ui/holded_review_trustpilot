@@ -37,6 +37,10 @@ VERTICAL_KEYWORDS = [
         "sii", "aeat", "hacienda", "modelo 303", "modelo 130", "modelo 111",
         "suministro inmediato", "agencia tributaria", "tax authority", "tax agency",
     ]),
+    ("Impuestos", [
+        "impuesto", "impuestos", "iva", "vat", "tax rate", "tipo de iva",
+        "declaracion de impuestos", "declaración de impuestos", "tax return",
+    ]),
     ("TPV", [
         "tpv", "pos", "punto de venta", "point of sale", "caja registradora",
         "terminal de venta", "datafono", "datáfono",
@@ -44,6 +48,10 @@ VERTICAL_KEYWORDS = [
     ("Facturación", [
         "factura", "invoic", "billing", "presupuesto", "quote", "cobro",
         "recurring invoice", "facturacion recurrente",
+    ]),
+    ("Contabilidad", [
+        "contabilidad", "accounting", "asiento contable", "libro mayor",
+        "plan contable", "cuenta de resultados", "balance contable", "contable",
     ]),
     ("Precio", [
         "precio", "precios", "caro", "carísimo", "carisimo", "price", "pricing",
@@ -63,13 +71,30 @@ VERTICAL_KEYWORDS = [
         "sincroniza con el banco", "bank sync", "sync my bank", "sync bank",
         "movimientos bancarios",
     ]),
+    ("Banco", [
+        "banco", "bancaria", "bancario", "bank account", "cuenta bancaria",
+        "conectar banco", "vincular banco", "banking connection",
+        "conexion bancaria", "conexión bancaria",
+    ]),
+    ("Nóminas", [
+        "nomina", "nóminas", "payroll", "salario", "sueldo",
+    ]),
     ("Recursos Humanos", [
-        "rrhh", "hr", "human resources", "nomina", "nómina", "payroll",
-        "empleado", "employee", "vacaciones", "ausencias", "fichaje",
+        "rrhh", "hr", "human resources", "empleado", "employee",
+        "vacaciones", "ausencias", "fichaje",
     ]),
     ("CRM", [
         "crm", "lead", "pipeline", "embudo de ventas", "sales funnel",
         "gestion de clientes", "gestión de clientes", "oportunidad de venta",
+    ]),
+    ("Proyectos", [
+        "proyecto", "proyectos", "project management", "gestion de proyectos",
+        "gestión de proyectos", "task management", "gestion de tareas",
+        "gestión de tareas",
+    ]),
+    ("Reservas", [
+        "reserva", "reservas", "booking", "sistema de reservas",
+        "cita previa", "agenda de citas", "appointment",
     ]),
     ("Inventario", [
         "inventar", "inventory", "stock", "almacen", "almacén", "warehouse",
@@ -83,6 +108,14 @@ VERTICAL_KEYWORDS = [
         "catalog", "catálog", "ficha de producto", "product listing",
         "variantes de producto",
     ]),
+    ("Importación", [
+        "importacion", "importación", "importar", "import data",
+        "csv import", "migracion de datos", "migración de datos",
+    ]),
+    ("Analítica", [
+        "analitica", "analítica", "analytics", "informes", "reportes",
+        "reporting", "estadisticas", "estadísticas", "kpi",
+    ]),
     ("Escáner", [
         "escaner", "escáner", "scanner", "escanear", "ocr", "scan receipt",
         "escanea tickets", "escanea facturas",
@@ -93,7 +126,10 @@ VERTICAL_KEYWORDS = [
 # Palabras cortas/ambiguas: deben coincidir como palabra EXACTA (limite al
 # principio Y al final), para no dar falsos positivos (ej. "ocr" dentro de
 # "mediocre", "pos" dentro de "suppose", "hr" dentro de otra palabra).
-EXACT_WORD_KEYWORDS = {"sii", "pos", "hr", "ocr", "crm", "lead", "bom", "precio", "precios"}
+EXACT_WORD_KEYWORDS = {
+    "sii", "pos", "hr", "ocr", "crm", "lead", "bom", "precio", "precios",
+    "iva", "kpi",
+}
 
 
 def classify_vertical(text: str) -> str:
