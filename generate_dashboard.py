@@ -324,6 +324,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     font-size: 13px;
     line-height: 1.45;
   }
+  .read-more-btn {
+    display: block;
+    margin-top: 6px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .read-more-btn:hover { text-decoration: underline; }
   footer {
     text-align: center;
     color: var(--muted);
@@ -462,15 +474,22 @@ function renderStars(rating) {
   return html;
 }
 
+const CARD_TEXTS = [];
+let cardTextSeq = 0;
+
 function renderReviewCard(r) {
-  const reviewShort = r.review.length > 160 ? r.review.slice(0, 160) + '…' : r.review;
+  const isLong = r.review.length > 160;
+  const reviewShort = isLong ? r.review.slice(0, 160) + '…' : r.review;
+  const idx = cardTextSeq++;
+  CARD_TEXTS[idx] = r.review;
   return `
     <div class="review-card">
       <div class="stars">${renderStars(r.rating)}</div>
       <div class="author">${escapeHtml(r.reviewer || 'Anonimo')}</div>
       <div class="author-meta">${escapeHtml(r.pais || '')}${r.pais ? ' · ' : ''}${escapeHtml(r.fecha)}</div>
       <div class="card-title">${escapeHtml(r.titulo)}</div>
-      <div class="card-text">${escapeHtml(reviewShort)}</div>
+      <div class="card-text" data-idx="${idx}">${escapeHtml(reviewShort)}</div>
+      ${isLong ? `<button class="read-more-btn" data-target="card" data-idx="${idx}">Leer más</button>` : ''}
     </div>
   `;
 }
@@ -483,6 +502,7 @@ function renderCards() {
     return;
   }
 
+  cardTextSeq = 0;
   wrap.innerHTML = verticalsWithData.map(vertical => {
     const items = REVIEWS.filter(r => r.vertical === vertical).slice(0, CARDS_PER_COLUMN);
     const color = COLORS[vertical] || '#94A3B8';
@@ -524,6 +544,8 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+const ROW_TEXTS = [];
+
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   const emptyState = document.getElementById('emptyState');
@@ -536,10 +558,13 @@ function renderTable() {
   }
   emptyState.style.display = 'none';
 
-  tbody.innerHTML = rows.map(r => {
+  ROW_TEXTS.length = 0;
+  tbody.innerHTML = rows.map((r, idx) => {
     const color = COLORS[r.vertical] || '#94A3B8';
     const ratingClass = r.rating ? `r${r.rating}` : '';
-    const reviewShort = r.review.length > 220 ? r.review.slice(0, 220) + '…' : r.review;
+    const isLong = r.review.length > 220;
+    const reviewShort = isLong ? r.review.slice(0, 220) + '…' : r.review;
+    ROW_TEXTS[idx] = r.review;
     return `
       <tr>
         <td class="meta">${escapeHtml(r.fecha)}</td>
@@ -547,13 +572,37 @@ function renderTable() {
         <td class="rating-cell ${ratingClass}">${r.rating ? r.rating + '/5' : '—'}</td>
         <td>
           <div class="review-title">${escapeHtml(r.titulo)}</div>
-          <div class="review-text">${escapeHtml(reviewShort)}</div>
+          <div class="review-text" data-idx="${idx}">${escapeHtml(reviewShort)}</div>
+          ${isLong ? `<button class="read-more-btn" data-target="row" data-idx="${idx}">Leer más</button>` : ''}
         </td>
         <td class="meta">${escapeHtml(r.reviewer)}${r.pais ? ', ' + escapeHtml(r.pais) : ''}</td>
       </tr>
     `;
   }).join('');
 }
+
+function truncate(text, limit) {
+  return text.length > limit ? text.slice(0, limit) + '…' : text;
+}
+
+function handleReadMoreClick(e) {
+  const btn = e.target.closest('.read-more-btn');
+  if (!btn) return;
+  const idx = btn.dataset.idx;
+  const isCard = btn.dataset.target === 'card';
+  const store = isCard ? CARD_TEXTS : ROW_TEXTS;
+  const limit = isCard ? 160 : 220;
+  const selector = `${isCard ? '.card-text' : '.review-text'}[data-idx="${idx}"]`;
+  const textEl = btn.parentElement.querySelector(selector) || btn.previousElementSibling;
+  const fullText = store[idx];
+  const expanded = btn.dataset.expanded === 'true';
+  textEl.textContent = expanded ? truncate(fullText, limit) : fullText;
+  btn.textContent = expanded ? 'Leer más' : 'Leer menos';
+  btn.dataset.expanded = expanded ? 'false' : 'true';
+}
+
+document.getElementById('reviewCards').addEventListener('click', handleReadMoreClick);
+document.getElementById('tableWrap').addEventListener('click', handleReadMoreClick);
 
 renderCards();
 renderFilters();
