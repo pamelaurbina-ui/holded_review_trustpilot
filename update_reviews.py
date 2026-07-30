@@ -87,6 +87,10 @@ VERTICAL_KEYWORDS = [
         "gestion de caja", "gestión de caja", "liquidez", "cash management",
         "prevision de tesoreria", "previsión de tesorería",
     ]),
+    ("Wallet", [
+        "wallet", "monedero", "e-wallet", "billetera", "cartera digital",
+        "monedero virtual",
+    ]),
     ("Nóminas", [
         "nomina", "nóminas", "payroll", "salario", "sueldo",
     ]),
