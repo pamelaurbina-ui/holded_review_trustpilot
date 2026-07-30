@@ -23,7 +23,7 @@ SHEET_NAME = "Reviews"
 
 VERTICAL_ORDER = [
     "Facturación", "Contabilidad", "Precio", "Soporte", "Conciliación", "Banco",
-    "General", "Escáner", "Recursos Humanos", "Nóminas", "CRM", "Proyectos",
+    "Tesorería", "General", "Escáner", "Recursos Humanos", "Nóminas", "CRM", "Proyectos",
     "Reservas", "Inventario", "Fabricación", "Catálogo", "Importación",
     "Analítica", "SII AEAT", "Impuestos", "TPV",
 ]
@@ -35,6 +35,7 @@ VERTICAL_COLORS = {
     "Soporte": "#3B82F6",
     "Conciliación": "#0EA5E9",
     "Banco": "#06B6D4",
+    "Tesorería": "#1D4ED8",
     "General": "#94A3B8",
     "Escáner": "#8B5CF6",
     "Recursos Humanos": "#EC4899",

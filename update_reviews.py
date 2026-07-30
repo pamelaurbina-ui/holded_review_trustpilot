@@ -82,6 +82,11 @@ VERTICAL_KEYWORDS = [
         "conectar banco", "vincular banco", "banking connection",
         "conexion bancaria", "conexión bancaria",
     ]),
+    ("Tesorería", [
+        "tesoreria", "tesorería", "treasury", "flujo de caja", "cash flow",
+        "gestion de caja", "gestión de caja", "liquidez", "cash management",
+        "prevision de tesoreria", "previsión de tesorería",
+    ]),
     ("Nóminas", [
         "nomina", "nóminas", "payroll", "salario", "sueldo",
     ]),
