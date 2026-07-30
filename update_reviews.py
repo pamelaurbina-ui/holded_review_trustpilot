@@ -1,29 +1,35 @@
 #!/usr/bin/env python3
 """
-Actualiza un Excel con las reviews de Trustpilot (Holded) publicadas en un feed RSS de rss.app.
+Actualiza un Excel con las reviews de Trustpilot (Holded) usando la API oficial
+de Trustpilot Business.
 
 Uso:
-    python update_reviews.py
+    TRUSTPILOT_API_KEY=xxx python update_reviews.py
 
 Comportamiento:
-- Descarga el XML del feed.
-- Extrae: fecha, título, texto de la review, rating, nombre del reviewer y país.
-- Si el Excel de salida ya existe, añade solo las reviews nuevas (dedupe por GUID).
+- Pagina la API de reviews (mas recientes primero) hasta encontrar una review
+  ya conocida (dedupe por GUID = id de Trustpilot).
+- Si el Excel de salida ya existe, añade solo las reviews nuevas.
 - Si no existe, lo crea con cabeceras y formato.
 """
 
+import json
+import os
 import re
 import sys
+import urllib.parse
 import urllib.request
-import xml.etree.ElementTree as ET
-from datetime import datetime
 from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Alignment
 from openpyxl.utils import get_column_letter
 
-FEED_URL = "https://rss.app/feeds/cgBhx0wJysNg5qoP.xml"
+API_BASE = "https://api.trustpilot.com/v1"
+BUSINESS_UNIT_ID = "5b924bf7477e7d0001af5bc7"
+PER_PAGE = 100
+MAX_PAGES = 30
+
 OUTPUT_XLSX = "holded_reviews.xlsx"
 SHEET_NAME = "Reviews"
 
@@ -150,77 +156,70 @@ def classify_vertical(text: str) -> str:
                 return vertical
     return "General"
 
-# La descripcion viene como HTML tipo:
-# <div>Texto de la review<br><br>Rating: 5/5 (Excellent)<br><br>Reviewer: Nombre, ES</div>
-RATING_RE = re.compile(r"Rating:\s*(\d+)/5\s*\(([^)]+)\)")
-REVIEWER_RE = re.compile(r"Reviewer:\s*(.*?),\s*([A-Z]{2})\s*$")
+def api_key() -> str:
+    key = os.environ.get("TRUSTPILOT_API_KEY")
+    if not key:
+        raise RuntimeError(
+            "Falta la variable de entorno TRUSTPILOT_API_KEY con la API key de Trustpilot Business."
+        )
+    return key
 
 
-def fetch_feed(url: str) -> bytes:
+def fetch_reviews_page(page: int) -> dict:
+    params = {
+        "apikey": api_key(),
+        "perPage": PER_PAGE,
+        "page": page,
+        "orderBy": "createdat.desc",
+    }
+    url = f"{API_BASE}/business-units/{BUSINESS_UNIT_ID}/reviews?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read()
+        return json.loads(resp.read())
 
 
-def strip_html(raw: str) -> str:
-    # Quita tags HTML y separa lineas donde habia <br>
-    text = re.sub(r"<br\s*/?>", "\n", raw)
-    text = re.sub(r"<[^>]+>", "", text)
-    return text.strip()
+def parse_review(raw: dict) -> dict:
+    review_id = raw.get("id", "")
+    created_at = raw.get("createdAt") or ""
+    fecha = created_at.split("T")[0] if created_at else ""
+    stars = raw.get("stars")
+    rating = f"{stars}/5" if stars is not None else ""
+    consumer = raw.get("consumer") or {}
+    titulo = (raw.get("title") or "").strip()
+    review_text = (raw.get("text") or "").strip()
+
+    return {
+        "fecha": fecha,
+        "guid": review_id,
+        "titulo": titulo,
+        "review": review_text,
+        "rating": rating,
+        "reviewer": consumer.get("displayName") or "",
+        "pais": consumer.get("displayLocation") or "",
+        "vertical": classify_vertical(f"{titulo} {review_text}"),
+        "link": f"https://www.trustpilot.com/reviews/{review_id}",
+    }
 
 
-def parse_description(raw_html: str):
-    text = strip_html(raw_html)
-
-    rating_match = RATING_RE.search(text)
-    rating = f"{rating_match.group(1)}/5 ({rating_match.group(2)})" if rating_match else ""
-
-    reviewer_match = REVIEWER_RE.search(text.split("\n")[-1] if text else "")
-    # Buscar la linea "Reviewer: ..." explicitamente por si no es la ultima
-    reviewer_name, country = "", ""
-    for line in text.split("\n"):
-        line = line.strip()
-        m = REVIEWER_RE.search(line)
-        if m:
-            reviewer_name, country = m.group(1), m.group(2)
+def fetch_new_reviews(known_guids: set) -> list:
+    """Recorre las reviews mas recientes primero (via API) y se detiene en
+    cuanto encuentra una que ya conocemos, asumiendo que todas las anteriores
+    a esa (mas antiguas) ya estan importadas."""
+    collected = []
+    for page in range(1, MAX_PAGES + 1):
+        data = fetch_reviews_page(page)
+        raw_reviews = data.get("reviews", [])
+        if not raw_reviews:
             break
-
-    # El cuerpo de la review es todo antes de "Rating:"
-    body = text.split("Rating:")[0].strip()
-
-    return body, rating, reviewer_name, country
-
-
-def parse_feed(xml_bytes: bytes):
-    root = ET.fromstring(xml_bytes)
-    items = []
-    for item in root.findall(".//item"):
-        title = (item.findtext("title") or "").strip()
-        link = (item.findtext("link") or "").strip()
-        guid = (item.findtext("guid") or "").strip()
-        pub_date_raw = (item.findtext("pubDate") or "").strip()
-        description_raw = item.findtext("description") or ""
-
-        try:
-            pub_date = datetime.strptime(pub_date_raw, "%a, %d %b %Y %H:%M:%S %Z")
-        except ValueError:
-            pub_date = None
-
-        body, rating, reviewer_name, country = parse_description(description_raw)
-        vertical = classify_vertical(f"{title} {body}")
-
-        items.append({
-            "fecha": pub_date.strftime("%Y-%m-%d") if pub_date else pub_date_raw,
-            "guid": guid,
-            "titulo": title,
-            "review": body,
-            "rating": rating,
-            "reviewer": reviewer_name,
-            "pais": country,
-            "vertical": vertical,
-            "link": link,
-        })
-    return items
+        hit_known = False
+        for raw in raw_reviews:
+            if raw.get("id", "") in known_guids:
+                hit_known = True
+                break
+            collected.append(parse_review(raw))
+        if hit_known:
+            break
+    return collected
 
 
 def load_or_create_workbook(path: Path):
@@ -256,20 +255,15 @@ def autosize_columns(ws):
 def main():
     output_path = Path(OUTPUT_XLSX)
 
-    print(f"Descargando feed: {FEED_URL}")
-    xml_bytes = fetch_feed(FEED_URL)
-
-    print("Parseando reviews...")
-    reviews = parse_feed(xml_bytes)
-    print(f"Reviews encontradas en el feed: {len(reviews)}")
-
     wb, ws = load_or_create_workbook(output_path)
     known_guids = existing_guids(ws)
 
+    print("Consultando la API de Trustpilot...")
+    reviews = fetch_new_reviews(known_guids)
+    print(f"Reviews nuevas encontradas: {len(reviews)}")
+
     new_count = 0
     for r in reviews:
-        if r["guid"] in known_guids:
-            continue
         ws.append([
             r["fecha"], r["guid"], r["titulo"], r["review"],
             r["rating"], r["reviewer"], r["pais"], r["vertical"], r["link"],
