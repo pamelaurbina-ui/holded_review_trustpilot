@@ -135,6 +135,9 @@ VERTICAL_KEYWORDS = [
         "escaner", "escáner", "scanner", "escanear", "ocr", "scan receipt",
         "escanea tickets", "escanea facturas",
     ]),
+    ("ERP", [
+        "erp", "sistema erp", "software erp", "gestion erp", "gestión erp",
+    ]),
 ]
 
 
@@ -143,7 +146,7 @@ VERTICAL_KEYWORDS = [
 # "mediocre", "pos" dentro de "suppose", "hr" dentro de otra palabra).
 EXACT_WORD_KEYWORDS = {
     "sii", "pos", "hr", "ocr", "crm", "lead", "bom", "precio", "precios",
-    "iva", "kpi",
+    "iva", "kpi", "erp",
 }
 
 

@@ -25,7 +25,7 @@ VERTICAL_ORDER = [
     "Facturación", "Contabilidad", "Precio", "Soporte", "Conciliación", "Banco",
     "Tesorería", "Wallet", "General", "Escáner", "Recursos Humanos", "Nóminas", "CRM", "Proyectos",
     "Reservas", "Inventario", "Fabricación", "Catálogo", "Importación",
-    "Analítica", "SII AEAT", "Impuestos", "TPV",
+    "Analítica", "SII AEAT", "Impuestos", "TPV", "ERP",
 ]
 
 VERTICAL_COLORS = {
@@ -37,6 +37,7 @@ VERTICAL_COLORS = {
     "Banco": "#06B6D4",
     "Tesorería": "#1D4ED8",
     "Wallet": "#166534",
+    "ERP": "#78350F",
     "General": "#94A3B8",
     "Escáner": "#8B5CF6",
     "Recursos Humanos": "#EC4899",
